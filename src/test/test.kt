@@ -27,7 +27,7 @@ import java.time.ZoneOffset
 
 val SEPARATOR_PATTERN = Regex("""^-- ([A-Z]\d+) -+""")
 
-private fun load_data(fn: String): SortedMap<String, String> {
+private fun loadData(fn: String): SortedMap<String, String> {
     val result = HashMap<String, String>()
     val reader = BufferedReader(getReader(fn))
     val lines = reader.readLines()
@@ -435,7 +435,7 @@ class TokenizerTest {
     fun data() {
         val path = dataFilePath("testdata.txt")
 
-        val cases = load_data(path)
+        val cases = loadData(path)
         val expected = mapOf("C25" to arrayOf(Token(TokenKind.Word, "unicode", "unicode"),
             Token(TokenKind.Assign, "=", null),
             Token(TokenKind.String, "'Grüß Gott'", "Grüß Gott"),
@@ -715,7 +715,7 @@ class ParserTest {
                 assertEquals("baz", (o.right as Token).value!!)
                 assertEquals(k1, o.left.kind)
                 assertEquals("foo", ((o.left as BinaryNode).left as Token).value!!)
-                assertEquals("bar", ((o.left as BinaryNode).right as Token).value!!)
+                assertEquals("bar", (o.left.right as Token).value!!)
             }
         }
     }
@@ -788,7 +788,7 @@ class ParserTest {
     fun data() {
         val path = dataFilePath("testdata.txt")
 
-        val cases = load_data(path)
+        val cases = loadData(path)
 
         val expectedMessages = mapOf(
             "D01" to "Unexpected type for key: Integer",
@@ -992,25 +992,20 @@ class ConfigTest {
     @Test
     fun badPaths() {
         val cases = listOf(
-            Pair("foo[1, 2]", "Invalid index at (1, 1): expected 1 expression, found 2"),
+            Pair("foo[1, 2]", "Invalid index at (1, 5): expected 1 expression, found 2"),
             Pair("foo[1] bar", "Invalid path: foo[1] bar"),
             Pair("foo.123", "Invalid path: foo.123"),
             Pair("foo.", "Expected Word but got EOF"),
-            Pair("foo[]", "Invalid index at (1, 1): expected 1 expression, found 0"),
+            Pair("foo[]", "Invalid index at (1, 5): expected 1 expression, found 0"),
             Pair("foo[1a]", "Invalid character in number: a"),
-            Pair("4", null)
+            Pair("4", "Invalid path: 4")
         )
 
-        for ((i, c) in cases.withIndex()) {
+        for (c in cases) {
             val e = { pp(c.first) }
             val t = assertFailsWith<InvalidPathException>(block = e)
             assertEquals("Invalid path: ${c.first}", t.message)
-            if (c.second == null) {
-                assertNull(t.cause, "failed at $i for ${c.first}")
-            }
-            else {
-                assertEquals(c.second, t.cause!!.message)
-            }
+            assertEquals(c.second, t.cause!!.message)
         }
     }
 
@@ -1076,10 +1071,14 @@ class ConfigTest {
         val keys = ArrayList(logConf.asDict().keys).sorted()
 
         assertEquals(listOf("formatters", "handlers", "loggers", "root"), keys)
-        val e = assertFailsWith(InvalidPathException::class) {
+        var e = assertFailsWith(InvalidPathException::class) {
             logConf["handlers.file/filename"]
         }
         assertIn("Invalid path: handlers.file/filename", e)
+        e = assertFailsWith(InvalidPathException::class) {
+            logConf["\"handlers.file/filename"]
+        }
+        assertIn("Invalid path: \"handlers.file/filename", e)
         assertEquals("bar", logConf.get("foo", "bar"))
         assertEquals("baz", logConf.get("foo.bar", "baz"))
         assertEquals("bozz", logConf.get("handlers.debug.levl", "bozz"))
@@ -1103,6 +1102,9 @@ class ConfigTest {
         val zo = ZoneOffset.ofHoursMinutes(5, 30)
         val expected = OffsetDateTime.of(ldt, zo)
         assertEquals(expected, test["date_time"])
+        val negzo = ZoneOffset.ofHoursMinutes(-5, -30)
+        val negoffset = OffsetDateTime.of(ldt, negzo)
+        assertEquals(negoffset, test["neg_offset_time"])
         ldt = LocalDateTime.of(2019, 3, 28,
                         23, 27, 4,
                     271828000)
@@ -1348,7 +1350,7 @@ class ConfigTest {
                 "short_name" to "address",
                 "placeholder" to "We need this for delivering to you",
                 "ph_i18n" to "your-postal-address",
-                "message" to "",
+                "message" to " ",
                 "required" to true,
                 "attrs" to hashMapOf("minlength" to 10L),
                 "grpclass" to "col-md-6"
@@ -1360,7 +1362,7 @@ class ConfigTest {
                 "label" to "Delivery Instructions",
                 "short_name" to "notes",
                 "placeholder" to "Any special delivery instructions?",
-                "message" to "",
+                "message" to " ",
                 "label_i18n" to "delivery-instructions",
                 "ph_i18n" to "any-special-delivery-instructions",
                 "grpclass" to "col-md-6"
@@ -1382,7 +1384,7 @@ class ConfigTest {
                         "label" to  "Verify",
                         "type" to  "submit",
                         "classes" to  "btn-primary"),
-                "message" to  "",
+                "message" to  " ",
                 "required" to  true
             )),
             Pair("refs.signup_password_field", hashMapOf(
@@ -1390,7 +1392,7 @@ class ConfigTest {
                 "type" to "password",
                 "label" to "Password",
                 "label_i18n" to "password",
-                "message" to "",
+                "message" to " ",
                 "name" to "password",
                 "ph_i18n" to "password-wanted-on-site",
                 "placeholder" to "The password you want to use on this site",
@@ -1406,7 +1408,7 @@ class ConfigTest {
                 "placeholder" to "The same password, again, " +
                 "to guard against mistyping",
                 "ph_i18n" to "same-password-again",
-                "message" to "",
+                "message" to " ",
                 "toggle" to true,
                 "required" to true
             )),
@@ -1418,7 +1420,7 @@ class ConfigTest {
                 "label_i18n" to  "your-name",
                 "placeholder" to  "Your full name",
                 "ph_i18n" to  "your-full-name",
-                "message" to  "",
+                "message" to  " ",
                 "data_source" to  "user.display_name",
                 "required" to  true,
                 "attrs" to  hashMapOf("autofocus" to  true),
@@ -1433,7 +1435,7 @@ class ConfigTest {
                 "placeholder" to "If not just the first word in your full name",
                 "ph_i18n" to "if-not-first-word",
                 "data_source" to "user.familiar_name",
-                "message" to "",
+                "message" to " ",
                 "grpclass" to "col-md-6"
             )),
             Pair("fieldsets.signup_ident[1].contents[0]", hashMapOf(
@@ -1445,7 +1447,7 @@ class ConfigTest {
                 "short_name" to "email address",
                 "placeholder" to "Your email address",
                 "ph_i18n" to "your-email-address",
-                "message" to "",
+                "message" to " ",
                 "required" to true,
                 "data_source" to "user.email",
                 "grpclass" to "col-md-6"
@@ -1460,7 +1462,7 @@ class ConfigTest {
                 "placeholder" to "Your phone number",
                 "ph_i18n" to "your-phone-number",
                 "classes" to "numeric",
-                "message" to "",
+                "message" to " ",
                 "prepend" to hashMapOf("icon" to "phone"),
                 "attrs" to hashMapOf("maxlength" to 10L),
                 "required" to true,
@@ -1502,7 +1504,8 @@ class ConfigTest {
             "foo[:2]",
             "foo[2:]",
             "foo[::1]",
-            "foo[::-1]"
+            "foo[::-1]",
+            "foo[3]"
         )
 
         for (c in cases) {
@@ -1528,7 +1531,7 @@ class ConfigTest {
             assertIn("Unable to convert string $c", e)
             config.strictConversions = false
             val s = config.convertString(c)
-            assertEquals(c, s)
+            assertTrue(c === s)
         }
     }
 

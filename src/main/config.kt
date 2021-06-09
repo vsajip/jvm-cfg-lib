@@ -1591,11 +1591,13 @@ val defaultStringConverter = fun(s: String) : Any {
                                       nanosecond)
 
             if (hasOffset) {
+                val sign = if (m[13] == "-") -1 else 1
                 val ohour = m[14].toInt()
                 val ominute = m[15].toInt()
                 val osecond = if (m[17] == "") { 0 } else { m[17].toInt() }
-                val offset = ZoneOffset.ofHoursMinutesSeconds(ohour, ominute,
-                                                              osecond)
+                val offset = ZoneOffset.ofHoursMinutesSeconds(ohour * sign,
+                                                              ominute * sign,
+                                                              osecond * sign)
 
                 result = OffsetDateTime.of(result, offset)
             }
