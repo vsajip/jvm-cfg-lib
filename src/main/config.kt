@@ -105,6 +105,33 @@ internal fun toSource(node: Any) : String {
     return parts.toString()
 }
 
+internal fun stringFor(o: Any) : String {
+    val result : String
+
+    if (o is ArrayList<*>) {
+        val parts = arrayListOf<String>()
+
+        for (item in o) {
+            parts.add(stringFor(item))
+        }
+        val contents = parts.joinToString { it }
+        result = "[$contents]"
+    }
+    else if (o is HashMap<*, *>) {
+        val parts = arrayListOf<String>()
+
+        for ((k, v) in o) {
+            parts.add("$k: ${stringFor(v)}")
+        }
+        val contents = parts.joinToString { it }
+        result = "{$contents}"
+    }
+    else {
+        result = o.toString()
+    }
+    return result
+}
+
 class Location(line: Int = 1, column: Int = 1) {
 
     var line: Int = line
@@ -1557,13 +1584,14 @@ internal class ListWrapper(internal val config: Config): ArrayList<Any>() {
     }
 }
 
-typealias StringConverter = (String) -> Any
+typealias StringConverter = (String, Config) -> Any
 
 internal val ISO_DATETIME_PATTERN = Regex("""^(\d{4})-(\d{2})-(\d{2})(([ T])(((\d{2}):(\d{2}):(\d{2}))(\.\d{1,6})?(([+-])(\d{2}):(\d{2})(:(\d{2})(\.\d{1,6})?)?)?))?${'$'}""")
 internal val ENV_VALUE_PATTERN = Regex("""^\$(\w+)(\|(.*))?$""")
 internal val COLON_OBJECT_PATTERN = Regex("""^([A-Za-z_]\w*(\.[A-Za-z_]\w*)*)(:([A-Za-z_]\w*))?$""")
+internal val INTERPOLATION_PATTERN = Regex("""\$\{([^}]+)\}""")
 
-val defaultStringConverter = fun(s: String) : Any {
+val defaultStringConverter = fun(s: String, cfg: Config) : Any {
     var result: Any = s
     var m = ISO_DATETIME_PATTERN.find(s)?.groupValues?.toTypedArray()
 
@@ -1652,6 +1680,35 @@ val defaultStringConverter = fun(s: String) : Any {
                 }
                 catch (cnfe: ClassNotFoundException) {
                     // nothing to do
+                }
+            }
+            else if (INTERPOLATION_PATTERN.containsMatchIn(s)) {
+                val matches = INTERPOLATION_PATTERN.findAll(s)
+                var cp = 0
+                val sb = StringBuilder()
+                var failed = false
+
+                for (match in matches) {
+                    val range = match.range
+                    val path = match.groupValues[1];
+
+                    if (range.first > cp) {
+                        sb.append(s.substring(cp until range.first))
+                    }
+                    try {
+                        sb.append(stringFor(cfg.get(path)))
+                    }
+                    catch (e: Exception) {
+                        failed = true
+                        break
+                    }
+                    cp = range.endInclusive + 1
+                }
+                if (!failed) {
+                    if (cp < s.length) {
+                        sb.append(s.substring(cp))
+                    }
+                    result = sb.toString()
                 }
             }
         }
@@ -2509,7 +2566,7 @@ class Config() {    // parens => no-arg primary constructor
     }
 
     fun convertString(s : String) : Any {
-        val result = stringConverter(s)
+        val result = stringConverter(s, this)
 
         if (strictConversions && (result === s)) {
             throw ConfigException("Unable to convert string $s")

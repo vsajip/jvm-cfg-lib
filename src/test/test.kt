@@ -1316,17 +1316,29 @@ class ConfigTest {
         assertEquals(160L, config["computed9"])
         assertEquals(62L, config["computed10"])
 
-        var e = assertFailsWith(ConfigException::class) {
-            config["bad_include"]
-        }
-        assertIn("@ operand must be a string", e)
-        e = assertFailsWith(ConfigException::class) {
-            config["computed7"]
-        }
-        assertIn("Not found in configuration: float4", e)
         assertEquals("b", config["dict.a"])
         // second call should return the same
         assertEquals("b", config["dict.a"])
+
+        // test interpolation
+
+        assertEquals("A-4 a test_foo true 10 1.0E-7 1 b [a, c, e, g]Z", config["interp"])
+        assertEquals("{a: b}", config["interp2"])
+
+        // test failure cases
+
+        val cases = arrayOf(
+            Pair("bad_include", "@ operand must be a string"),
+            Pair("computed7", "Not found in configuration: float4"),
+            Pair("bad_interp", "Unable to convert string ")
+        )
+
+        for (c in cases) {
+            val e = assertFailsWith(ConfigException::class) {
+                config[c.first]
+            }
+            assertIn(c.second, e)
+        }
     }
 
     @Test
