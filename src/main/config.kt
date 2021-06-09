@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Red Dove Consultants Limited
+//  Copyright (C) 2018-2021 Red Dove Consultants Limited
 //
 package com.reddove.config
 
@@ -351,7 +351,7 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
     private val reader: BufferedReader = r as? BufferedReader ?: BufferedReader(r)
 
     private fun pushBack(c: Char) {
-        if ((c != '\u0000') && ((c == '\n') || !c.isWhitespace())) {
+        if (c != '\u0000') {
             pushedBack.push(Pair(c, Location(charLocation)))
         }
     }
@@ -699,7 +699,7 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
 
                 kind = TokenKind.String
 
-                appendChar(text, c, endLocation)
+                text.append(c)
                 val c1 = getChar()
                 val c1Loc = Location(charLocation)
 
@@ -774,7 +774,7 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
 
                 if (nc != '=') {
                     kind = TokenKind.Assign
-                    appendChar(text, c, endLocation)
+                    text.append(c)
                     pushBack(nc)
                 }
                 else {
@@ -1053,7 +1053,7 @@ class Parser(r: Reader) {
                 result = list()
             }
             TokenKind.Dollar -> {
-                expect(TokenKind.Dollar)
+                advance()
                 expect(TokenKind.LeftCurly)
                 val spos = next.start
                 result = UnaryNode(TokenKind.Dollar, primary())
@@ -1066,7 +1066,7 @@ class Parser(r: Reader) {
                 result = value()
             }
             TokenKind.LeftParenthesis -> {
-                expect(TokenKind.LeftParenthesis)
+                advance()
                 result = expr()
                 expect(TokenKind.RightParenthesis)
             }
@@ -1183,6 +1183,7 @@ class Parser(r: Reader) {
     internal fun mappingBody(): MappingNode {
         val result = ArrayList<Pair<ASTNode, ASTNode>>()
         var kind = consumeNewlines()
+        val spos = next.start
 
         if ((kind != TokenKind.RightCurly) && (kind != TokenKind.EOF)) {
             if ((kind != TokenKind.Word) && (kind != TokenKind.String)) {
@@ -1208,9 +1209,17 @@ class Parser(r: Reader) {
                     advance()
                     kind = consumeNewlines()
                 }
+                else if ((kind != TokenKind.RightCurly) && (kind != TokenKind.EOF)) {
+                    val e = ParserException("Unexpected following value: $kind")
+
+                    e.location = next.start
+                    throw e
+                }
             }
         }
-        return MappingNode(result)
+        val mn = MappingNode(result)
+        mn.start = spos
+        return mn
     }
 
     internal fun mapping(): MappingNode {
@@ -1223,6 +1232,7 @@ class Parser(r: Reader) {
     private fun listBody(): ListNode {
         val result = ArrayList<ASTNode>()
         var kind = consumeNewlines()
+        val spos = next.start
 
         while (kind in expressionStarters) {
             result.add(expr())
@@ -1233,7 +1243,9 @@ class Parser(r: Reader) {
             advance()
             kind = consumeNewlines()
         }
-        return ListNode(result)
+        val ln = ListNode(result)
+        ln.start = spos
+        return ln
     }
 
     private fun list(): ListNode {
@@ -1310,12 +1322,12 @@ class Parser(r: Reader) {
     // not private - used in tests
     internal fun addExpr(): ASTNode {
         var result = mulExpr()
+        var kind = next.kind
 
-        while ((next.kind == TokenKind.Plus) || (next.kind == TokenKind.Minus)) {
-            val op = next.kind
-
+        while ((kind == TokenKind.Plus) || (kind == TokenKind.Minus)) {
             advance()
-            result = BinaryNode(op, result, mulExpr())
+            result = BinaryNode(kind, result, mulExpr())
+            kind = next.kind
         }
         return result
     }
@@ -1323,12 +1335,12 @@ class Parser(r: Reader) {
     // not private - used in tests
     internal fun shiftExpr(): ASTNode {
         var result = addExpr()
+        var kind = next.kind
 
-        while ((next.kind == TokenKind.LeftShift) || (next.kind == TokenKind.RightShift)) {
-            val op = next.kind
-
+        while ((kind == TokenKind.LeftShift) || (kind == TokenKind.RightShift)) {
             advance()
-            result = BinaryNode(op, result, addExpr())
+            result = BinaryNode(kind, result, addExpr())
+            kind = next.kind
         }
         return result
     }
@@ -1508,9 +1520,9 @@ internal class DictWrapper(private val config: Config): LinkedHashMap<String, An
 
 internal class ListWrapper(internal val config: Config): ArrayList<Any>() {
     override fun get(index: Int): Any {
-        val result = super.get(index)
+        val result = config.evaluated(super.get(index))
 
-        this[index] = config.evaluated(result)
+        this[index] = result
         return result
     }
 
@@ -2328,28 +2340,17 @@ internal fun isIdentifier(s: String) : Boolean {
 }
 
 internal fun parsePath(s : String): ASTNode {
-    val parser = Parser(StringReader(s))
     val result: ASTNode
 
-    if (parser.next.kind != TokenKind.Word) {
-        throw InvalidPathException("Invalid path: $s")
-    }
     try {
-        var failed = false
+        val parser = Parser(StringReader(s))
+
+        if (parser.next.kind != TokenKind.Word) {
+            throw InvalidPathException("Invalid path: $s")
+        }
 
         result = parser.primary()
         if (!parser.atEnd) {
-            failed = true
-        }
-/*
-        else if (result !is BinaryNode) {
-            // this shouldn't have been called on a bare identifier, so it ought
-            // to be a BinaryNode instance.
-            failed = true
-        }
-*/
-
-        if (failed) {
             throw InvalidPathException("Invalid path: $s")
         }
     }
@@ -2550,9 +2551,10 @@ class Config() {    // parens => no-arg primary constructor
                     throw cre
                 } catch (ce : ConfigException) {
                     if (default === MISSING) {
-                        val e = ConfigException("Not found in configuration: $key")
+                        //val e = ConfigException("Not found in configuration: $key")
 
-                        throw e
+                        //throw e
+                        throw ce
                     }
                     result = default
                 }
