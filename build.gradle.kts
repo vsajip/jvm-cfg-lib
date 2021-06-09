@@ -3,7 +3,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.3.70"
+    id("org.jetbrains.kotlin.jvm") version "1.4.21"
 
     // For documentation
     id("org.jetbrains.dokka") version "0.10.1"
@@ -19,9 +19,7 @@ group = "com.reddove"
 version = "0.1.0"
 
 repositories {
-    // Use jcenter for resolving dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -32,7 +30,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.70")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.21")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
