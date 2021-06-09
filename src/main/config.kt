@@ -1671,20 +1671,28 @@ internal class Evaluator(private val config: Config) {
             ce.location = node.operand.start
             throw ce
         }
-        var p = Paths.get(config.rootDir, fn)
+
         var found = false
+        var p = Paths.get(fn)
         val result: Any
 
-        if (p.toFile().exists()) {
+        if (p.isAbsolute && p.toFile().exists()) {
             found = true
         }
         else {
-            for (it in config.includePath) {
-                p = Paths.get(it, fn)
+            p = Paths.get(config.rootDir, fn)
 
-                if (p.toFile().exists()) {
-                    found = true
-                    break
+            if (p.toFile().exists()) {
+                found = true
+            }
+            else {
+                for (it in config.includePath) {
+                    p = Paths.get(it, fn)
+
+                    if (p.toFile().exists()) {
+                        found = true
+                        break
+                    }
                 }
             }
         }
@@ -1692,7 +1700,7 @@ internal class Evaluator(private val config: Config) {
             val e = ConfigException("Unable to locate $fn")
 
             e.location = node.operand.start
-            throw  e
+            throw e
         }
 
         val r = getReader(p.toString())
@@ -1706,6 +1714,7 @@ internal class Evaluator(private val config: Config) {
             cfg.strictConversions = config.strictConversions
             cfg.context = config.context
             cfg.setPath(p.toString())
+            cfg.includePath = config.includePath
             if (config.cache != null) {
                 cfg.cache = HashMap()
             }

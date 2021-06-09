@@ -1617,4 +1617,26 @@ class ConfigTest {
             assertIn("index out of range: ", ce)
         }
     }
+
+    @Test
+    fun absoluteIncludePaths() {
+        val rd = dataFileDir("derived").toString()
+        val p = Paths.get(rd, "test.cfg").toAbsolutePath().toString().replace("\\", "/")
+        val source = "test: @'$p'"
+        val cfg = Config(StringReader(source))
+
+        assertEquals(2L, cfg["test.computed6"])
+    }
+
+    @Test
+    fun nestedIncludePaths() {
+        val d1 = dataFileDir("base").toString()
+        val d2 = dataFileDir("derived").toString()
+        val d3 = dataFileDir("another").toString()
+        val p = Paths.get(d1, "top.cfg").toString()
+        val cfg = fromPath(p)
+
+        cfg.includePath = arrayListOf(d2, d3)
+        assertEquals(42L, cfg["level1.level2.final"])
+    }
 }
