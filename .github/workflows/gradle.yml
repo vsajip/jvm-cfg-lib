@@ -28,4 +28,5 @@ jobs:
     - name: Test with Gradle
       uses: gradle/gradle-build-action@v1
       with:
+        gradle-version: current
         arguments: test
