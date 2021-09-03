@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Red Dove Consultants Limited
+//  Copyright (C) 2018-2021 Red Dove Consultants Limited
 //
 package com.reddove.config.test
 
