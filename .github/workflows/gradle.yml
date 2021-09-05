@@ -25,8 +25,23 @@ jobs:
       with:
         java-version: ${{ matrix.java-version }}
         distribution: 'adopt'
-    - name: Test with Gradle
-      uses: gradle/gradle-build-action@v1
-      with:
-        gradle-version: current
-        arguments: test
+    - name: Run tests on Windows after setting HOME environment variable
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        $env:HOME = $env:HOMEPATH
+        echo "Set HOME to $HOME"
+        gradle test
+#      uses: gradle/gradle-build-action@v1
+#      with:
+#        gradle-version: current
+#        arguments: test
+#      env:
+#        HOME: $HOMEPATH
+    - name: Run tests on POSIX
+      if: ${{ matrix.os != 'windows-latest' }}
+      run: |
+        gradle test
+#      uses: gradle/gradle-build-action@v1
+#      with:
+#        gradle-version: current
+#        arguments: test
