@@ -3,10 +3,10 @@ import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.21"
+    id("org.jetbrains.kotlin.jvm") version "1.5.21"
 
     // For documentation
-    id("org.jetbrains.dokka") version "0.10.1"
+    id("org.jetbrains.dokka") version "1.4.32"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -30,7 +30,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.21")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
@@ -60,6 +60,12 @@ sourceSets {
     }
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>() {
+    // otherwise can't handle nested try/catch blocks
+    // see https://youtrack.jetbrains.com/issue/KT-47851
+    kotlinOptions.jvmTarget = "1.6"
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     testLogging {
@@ -79,8 +85,8 @@ tasks.withType(Jar::class) {
 }
 
 tasks.withType(DokkaTask::class) {
-    outputFormat = "html"
-    outputDirectory = "$buildDir/dokka"
+    //outputFormat = "html"
+    //outputDirectory = "$buildDir/dokka"
     // add other Dokka configuration here
 }
 

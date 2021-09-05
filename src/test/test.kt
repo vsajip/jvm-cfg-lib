@@ -1181,8 +1181,14 @@ class ConfigTest {
         val strings = config["strings"] as ArrayList<Any?>
         assertEquals("Oscar Fingal O'Flahertie Wills Wilde", strings[0])
         assertEquals("size: 5\"", strings[1])
-        assertEquals("Triple quoted form\ncan span\n'multiple' lines", strings[2])
-        assertEquals("with \"either\"\nkind of 'quote' embedded within", strings[3])
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            assertEquals("Triple quoted form\r\ncan span\r\n'multiple' lines", strings[2])
+            assertEquals("with \"either\"\r\nkind of 'quote' embedded within", strings[3])
+        }
+        else {
+            assertEquals("Triple quoted form\ncan span\n'multiple' lines", strings[2])
+            assertEquals("with \"either\"\nkind of 'quote' embedded within", strings[3])
+        }
 
         // special strings
         assertEquals(File.pathSeparator, config["special_value_1"])

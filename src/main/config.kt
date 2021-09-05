@@ -651,12 +651,17 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
                 if (c != '\n') {
                     pushBack(c)
                 }
+                text.append(c)
+                endLocation.update(location)
+                endLocation.column -= 1
                 kind = TokenKind.Newline
-                location.nextLine()
                 break
             }
             else if (c == '\\') {
                 c = getChar()
+                if (c == '\r') {
+                    c = getChar()
+                }
                 if (c != '\n') {
                     val e = TokenizerException("Unexpected character: \\")
 
