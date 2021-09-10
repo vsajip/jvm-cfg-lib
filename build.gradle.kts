@@ -1,22 +1,20 @@
-import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.5.21"
+    id("org.jetbrains.kotlin.jvm") version "1.5.30"
 
     // For documentation
-    id("org.jetbrains.dokka") version "1.4.32"
+    id("org.jetbrains.dokka") version "1.5.0"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
     // For Maven repository upload
     `maven-publish`
-    id("com.jfrog.bintray") version "1.8.4"
+    signing
 }
 
-group = "com.reddove"
-version = "0.1.0"
+group = "com.red-dove"
+version = "0.1.1"
 
 repositories {
     mavenCentral()
@@ -30,7 +28,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.30")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
@@ -74,54 +72,77 @@ tasks.withType<Test> {
     }
 }
 
+tasks.register<Javadoc>("Javadoc") {
+    source(sourceSets["main"].allJava)
+}
+
 tasks.withType(Jar::class) {
     manifest {
         attributes["Manifest-Version"] = "1.0"
         attributes["Implementation-Title"] = "Red Dove CFG library"
-        attributes["Implementation-Version"] = "0.1.0"
+        attributes["Implementation-Version"] = "0.1.1"
         attributes["Implementation-Vendor"] = "Red Dove Consultants Limited"
-        attributes["Implementation-Vendor-Id"] = "com.reddove"
+        attributes["Implementation-Vendor-Id"] = "com.red-dove"
     }
 }
 
-tasks.withType(DokkaTask::class) {
-    //outputFormat = "html"
-    //outputDirectory = "$buildDir/dokka"
-    // add other Dokka configuration here
+tasks.dokkaJavadoc.configure {
+    outputDirectory.set(buildDir.resolve("docs/javadoc"))
 }
 
-fun prop(s: String) = project.findProperty(s) as String?
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
 
 publishing {
-    publications.register("publication", MavenPublication::class) {
-        from(components["java"])
-    }
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.red-dove"
+            artifactId = "config"
+            version = "0.1.1"
 
+            from(components["java"])
+            pom {
+                name.set("CFG Library")
+                description.set("A JVM library for working with the CFG configuration format.")
+                url.set("https://docs.red-dove.com/cfg/kotlin.html")
+                licenses {
+                    license {
+                        name.set("The 3-Clause BSD License")
+                        url.set("https://opensource.org/licenses/BSD-3-Clause")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("vsajip")
+                        name.set("Vinay Sajip")
+                        email.set("vinay_sajip@yahoo.co.uk")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/vsajip/jvm-cfg-lib.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/vsajip/jvm-cfg-lib.git")
+                    url.set("https://github.com/vsajip/jvm-cfg-lib/")
+                }
+            }
+        }
+    }
     repositories {
         maven {
-            setUrl("https://bintray.com/reddove/public")
-            metadataSources {
-                gradleMetadata()
+            //url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                val ossrhUsername: String by project
+                val ossrhPassword: String by project
+                username = ossrhUsername
+                password = ossrhPassword
             }
         }
     }
 }
 
-val publication by publishing.publications
-
-bintray {
-    user = prop("bintrayUser")
-    key = prop("bintrayAPIKey")
-    publish = true
-    override = true
-    setPublications(publication.name)
-    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
-        repo = "public"
-        name = "com.reddove.config"
-        userOrg = "reddove"
-        websiteUrl = "https://www.red-dove.com"
-        vcsUrl = "https://github.com/vsajip/ktlib"
-        setLabels("configuration")
-        setLicenses("BSD-3-Clause")
-    })
+signing {
+    useGpgCmd()
+    sign(publishing.publications["maven"])
 }

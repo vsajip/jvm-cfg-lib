@@ -1,23 +1,27 @@
-The CFG configuration format is a text format for configuration files which is similar to, and a superset of, the JSON format. It dates from [2008](https://wiki.python.org/moin/HierConfig) and has the following aims:
+The CFG configuration format is a text format for configuration files which is similar to, and a superset of, the JSON format. It dates from before its first announcement in [2008](https://wiki.python.org/moin/HierConfig) and has the following aims:
 
 * Allow a hierarchical configuration scheme with support for key-value mappings and lists.
 * Support cross-references between one part of the configuration and another.
+* Provide a string interpolation facility to easily build up configuration values from other configuration values.
 * Provide the ability to compose configurations (using include and merge facilities).
-* Provide the ability to access real application objects safely.
+* Provide the ability to access real application objects safely, where supported by the platform.
+* Be completely declarative.
 
 It overcomes a number of drawbacks of JSON when used as a configuration format:
 
 * JSON is more verbose than necessary.
 * JSON doesn’t allow comments.
+* JSON doesn’t provide first-class support for dates and multi-line strings.
 * JSON doesn’t allow trailing commas in lists and mappings.
+* JSON doesn’t provide easy cross-referencing, interpolation, or composition.
 
-The CFG reference implementation for the Java Virtual Machine (JVM) is written in the Kotlin programming language. The implementation assumes a JVM version of 8 or later. The Kotlin version tested with is 1.3.61 or later. The jar is usually named com.reddove.config-X.Y.Z.jar where X.Y.Z is the version number.
+The CFG reference implementation for the Java Virtual Machine (JVM) is written in the Kotlin programming language. The implementation assumes a JVM version of 8 or later. The Kotlin version tested with is 1.3.61 or later. The jar is usually named config-X.Y.Z.jar where X.Y.Z is the version number.
 
 Installation
 ============
-You can install the jar from the Maven repository at https://dl.bintray.com/reddove/public and configure Maven, Gradle etc. appropriately. The jar will be located at a path like
+You can install the jar from the Maven repository at https://repo1.maven.org/maven2/com/red-dove/config/ and configure Maven, Gradle etc. appropriately to use it as a dependency. The jar will be located at a path like
 
-https://dl.bintray.com/reddove/public/com/reddove/com.reddove.config/X.Y.Z/com.reddove.config-X.Y.Z.jar
+https://repo1.maven.org/maven2/com/red-dove/config/X.Y.Z/config-X.Y.Z.jar
 
 Where X.Y.Z is the version of the library.
 
