@@ -133,8 +133,8 @@ publishing {
             //url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
             url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                val ossrhUsername: String by project
-                val ossrhPassword: String by project
+                val ossrhUsername: String? by project
+                val ossrhPassword: String? by project
                 username = ossrhUsername
                 password = ossrhPassword
             }
