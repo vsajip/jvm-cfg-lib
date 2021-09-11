@@ -29,7 +29,7 @@ Exploration
 ============
 To explore CFG functionality for the JVM, we use the Kotlin compiler in interactive mode to act as a Read-Eval-Print-Loop (REPL). Once installed, you can invoke a shell using
 ```
-$ export CP=com.reddove.config-X.Y.Z.jar:commons-math3-3.6.1.jar:kotlin-reflect-1.3.61.jar:kotlin-stdlib-1.3.61.jar
+$ export CP=config-X.Y.Z.jar:commons-math3-3.6.1.jar:kotlin-reflect-1.3.61.jar:kotlin-stdlib-1.3.61.jar
 $ kotlinc-jvm -cp $CP
 ```
 The additional jar files are runtime dependencies of this JVM implmentation.
