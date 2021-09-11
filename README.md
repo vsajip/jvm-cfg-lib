@@ -130,3 +130,18 @@ You can specify a default value to be used if an environment variable isn’t pr
 res12: kotlin.Any = bar
 ```
 For more information, see [the CFG documentation](https://docs.red-dove.com/cfg/index.html).
+
+Change Log
+==========
+
+## 0.1.1 (2021-09-11)
+
+- [x] Added string interpolation functionality.
+- [x] Fixed bugs and tests related to line endings on Windows.
+- [x] Preserved include path in included configurations.
+- [x] Made some improvements to error reporting.
+- [x] Moved archive hosting to Maven Central from the decommissioned BinTray.
+
+## 0.1.0 (2020-03-26)
+
+- [x] Initial release.
