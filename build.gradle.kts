@@ -100,7 +100,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.red-dove"
             artifactId = "config"
-            version = "0.1.1"
+            version = "0.1.2"
 
             from(components["java"])
             pom {
