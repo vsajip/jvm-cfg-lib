@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.red-dove"
-version = "0.1.1"
+version = "0.1.2"
 
 repositories {
     mavenCentral()
@@ -80,7 +80,7 @@ tasks.withType(Jar::class) {
     manifest {
         attributes["Manifest-Version"] = "1.0"
         attributes["Implementation-Title"] = "Red Dove CFG library"
-        attributes["Implementation-Version"] = "0.1.1"
+        attributes["Implementation-Version"] = "0.1.2"
         attributes["Implementation-Vendor"] = "Red Dove Consultants Limited"
         attributes["Implementation-Vendor-Id"] = "com.red-dove"
     }

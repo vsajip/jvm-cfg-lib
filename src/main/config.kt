@@ -2640,9 +2640,14 @@ class Config() {    // parens => no-arg primary constructor
         return result
     }
 
-    operator fun get(key: String, default: Any = MISSING) : Any {
+    fun get(key: String, default: Any) : Any {
         return unwrap(baseGet(key, default))
     }
+
+    operator fun get(key: String) : Any {
+        return unwrap(baseGet(key, MISSING))
+    }
+
 
     fun asDict() : HashMap<String, Any> {
         return data!!.asDict()
