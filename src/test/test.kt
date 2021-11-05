@@ -1657,4 +1657,16 @@ class ConfigTest {
         cfg.includePath = arrayListOf(d2, d3)
         assertEquals(42L, cfg["level1.level2.final"])
     }
+
+    @Test
+    fun recursiveConfiguration() {
+        val rd = dataFileDir("derived").toString()
+        val p = Paths.get(rd, "recurse.cfg")
+        val cfg = fromPath(p.toString())
+
+        var e: ConfigException = assertFailsWith(ConfigException::class) {
+            cfg["recurse"]
+        }
+        assertIn("Configuration cannot include itself: recurse.cfg", e)
+    }
 }

@@ -282,7 +282,8 @@ internal val punctuation = mapOf(
     '&' to TokenKind.BitwiseAnd,
     '|' to TokenKind.BitwiseOr,
     '^' to TokenKind.BitwiseXor,
-    '.' to TokenKind.Dot
+    '.' to TokenKind.Dot,
+    '=' to TokenKind.Assign
 )
 
 internal val keywords = mapOf(
@@ -801,21 +802,6 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
                 value = t.second
                 break
             }
-            else if (c == '=') {
-                val nc = getChar()
-
-                if (nc != '=') {
-                    kind = TokenKind.Assign
-                    text.append(c)
-                    pushBack(nc)
-                }
-                else {
-                    kind = TokenKind.Equal
-                    text.append(c)
-                    appendChar(text, c, endLocation)
-                }
-                break
-            }
             else if (punctuation.containsKey(c)) {
                 kind = punctuation[c] ?: error("unexpected null value in internal lookup")
                 appendChar(text, c, endLocation)
@@ -829,6 +815,16 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
                         val t = getNumber(text, startLocation, endLocation)
                         kind = t.first
                         value = t.second
+                    }
+                }
+                else if (c == '=') {
+                    c = getChar()
+                    if (c != '=') {
+                        pushBack(c)
+                    }
+                    else {
+                        kind = TokenKind.Equal
+                        appendChar(text, c, endLocation)
                     }
                 }
                 else if (c == '-') {
@@ -1118,8 +1114,9 @@ class Parser(r: Reader) {
 
         fun invalidIndex(n: Int, pos: Location) {
             val msg = "Invalid index at $pos: expected 1 expression, found $n"
-
-            throw ParserException(msg)
+            val e = ParserException(msg)
+            e.location = pos
+            throw e
         }
 
         if (op != TokenKind.LeftBracket) {
@@ -1199,7 +1196,7 @@ class Parser(r: Reader) {
         return result
     }
 
-    private fun objectKey(): Token {
+    private fun mappingKey(): Token {
         val result: Token
 
         if (next.kind == TokenKind.String) {
@@ -1225,7 +1222,7 @@ class Parser(r: Reader) {
                 throw e
             }
             while ((kind == TokenKind.Word) || (kind == TokenKind.String)) {
-                val key = objectKey()
+                val key = mappingKey()
                 kind = next.kind
                 if ((kind != TokenKind.Colon) && (kind != TokenKind.Assign)) {
                     val e = ParserException("Expected key-value separator, found: $kind")
@@ -1446,7 +1443,7 @@ class Parser(r: Reader) {
     internal fun comparison(): ASTNode {
         var result = bitorExpr()
 
-        while (next.kind in comparisonOperators) {
+        if (next.kind in comparisonOperators) {
             val op = compOp()
 
             result = BinaryNode(op, result, bitorExpr())
@@ -1721,6 +1718,12 @@ val defaultStringConverter = fun(s: String, cfg: Config) : Any {
     return result
 }
 
+private fun sameFile(s1: String, s2: String): Boolean {
+    val p1 = Paths.get(s1)
+    val p2 = Paths.get(s2)
+    return p1 == p2
+}
+
 internal class Evaluator(private val config: Config) {
     val refsSeen = hashSetOf<ASTNode>()
 
@@ -1760,6 +1763,13 @@ internal class Evaluator(private val config: Config) {
         }
         if (!found) {
             val e = ConfigException("Unable to locate $fn")
+
+            e.location = node.operand.start
+            throw e
+        }
+
+        if ((config.path != null) && sameFile(config.path!!, p.toString())) {
+            val e = ConfigException("Configuration cannot include itself: $fn")
 
             e.location = node.operand.start
             throw e
