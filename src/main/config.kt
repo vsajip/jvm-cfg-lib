@@ -744,9 +744,7 @@ internal class Tokenizer(r: Reader) : Iterable<Token> {
 
                     if (c2 != quote) {
                         pushBack(c2)
-                        if (c2 == '\u0000') {
-                            charLocation.update(c1Loc)
-                        }
+                        charLocation.update(c1Loc)
                         pushBack(c1)
                     }
                     else {
