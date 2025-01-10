@@ -1637,13 +1637,16 @@ class ConfigTest {
     }
 
     @Test
-    fun absoluteIncludePaths() {
+    fun includePaths() {
         val rd = dataFileDir("derived").toString()
-        val p = Paths.get(rd, "test.cfg").toAbsolutePath().toString().replace("\\", "/")
-        val source = "test: @'$p'"
-        val cfg = Config(StringReader(source))
-
-        assertEquals(2L, cfg["test.computed6"])
+        val p1 = Paths.get(rd, "test.cfg")
+        val p2 = p1.toAbsolutePath()
+        for (p in listOf(p1, p2)) {
+            val s = p.toString().replace("\\", "/")
+            val source = "test: @'$s'"
+            val cfg = Config(StringReader(source))
+            assertEquals(2L, cfg["test.computed6"])
+        }
     }
 
     @Test

@@ -2484,7 +2484,7 @@ class Config() {    // parens => no-arg primary constructor
     var context: Map<String, Any> = hashMapOf()
     var includePath: ArrayList<String> = arrayListOf()
     var path: String? = null
-    var rootDir: String? = null
+    var rootDir: String = System.getProperty("user.dir")
     var stringConverter: StringConverter = defaultStringConverter
     internal var evaluator = Evaluator(this)
 
@@ -2573,11 +2573,6 @@ class Config() {    // parens => no-arg primary constructor
         load(getReader(path))
     }
 
-    internal fun getFromPath(path: String) : Any {
-        evaluator.refsSeen.clear()
-        return evaluator.getFromPath(parsePath(path))
-    }
-
     fun convertString(s : String) : Any {
         val result = stringConverter(s, this)
 
@@ -2623,7 +2618,8 @@ class Config() {    // parens => no-arg primary constructor
             else {
                 // not an identifier. Treat as a path
                 try {
-                    result = getFromPath(key)
+                    evaluator.refsSeen.clear()
+                    result = evaluator.getFromPath(parsePath(key))
                 } catch (ipe: InvalidPathException) {
                     throw ipe
                 } catch (bie: BadIndexException) {
