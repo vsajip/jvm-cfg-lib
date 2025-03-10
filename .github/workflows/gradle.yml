@@ -28,10 +28,16 @@ jobs:
       with:
         java-version: ${{ matrix.java-version }}
         distribution: 'adopt'
-    - name: Setup Gradle
+    - name: Setup Gradle for Java < 21
+      if: ${{ matrix.java-version != '21' }}
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '7.6.4'
+    - name: Setup Gradle for Java 21
+      if: ${{ matrix.java-version == '21' }}
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.13'
     - name: Run tests on Windows after setting HOME environment variable
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
