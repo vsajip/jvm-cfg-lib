@@ -58,14 +58,6 @@ sourceSets {
     }
 }
 
-/*
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>() {
-    // otherwise can't handle nested try/catch blocks
-    // see https://youtrack.jetbrains.com/issue/KT-47851
-    kotlinOptions.jvmTarget = "1.6"
-}
- */
-
 tasks.withType<Test> {
     useJUnitPlatform()
     testLogging {
