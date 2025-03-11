@@ -1,10 +1,10 @@
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.5.31"
+    id("org.jetbrains.kotlin.jvm") version "1.9.25"
 
     // For documentation
-    id("org.jetbrains.dokka") version "1.5.0"
+    id("org.jetbrains.dokka") version "2.0.0"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -58,11 +58,13 @@ sourceSets {
     }
 }
 
+/*
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>() {
     // otherwise can't handle nested try/catch blocks
     // see https://youtrack.jetbrains.com/issue/KT-47851
     kotlinOptions.jvmTarget = "1.6"
 }
+ */
 
 tasks.withType<Test> {
     useJUnitPlatform()
