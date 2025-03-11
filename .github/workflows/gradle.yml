@@ -38,18 +38,15 @@ jobs:
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '8.13'
+    - name: Set Gradle proprties
+      run: |
+        echo "org.jetbrains.dokka.experimental.gradle.pluginMode=V2EnabledWithHelpers" > gradle.properties
     - name: Run tests on Windows after setting HOME environment variable
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
         $env:HOME = $env:HOMEPATH
         echo "Set HOME to $HOME"
         gradle test
-#      uses: gradle/gradle-build-action@v1
-#      with:
-#        gradle-version: current
-#        arguments: test
-#      env:
-#        HOME: $HOMEPATH
     - name: Run tests on POSIX
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
